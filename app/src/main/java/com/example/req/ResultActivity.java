@@ -21,13 +21,13 @@ public class ResultActivity extends AppCompatActivity {
         mResult = (TextView) findViewById(R.id.tv_result);
         mDone = (Button) findViewById( R.id.b_done);
 
-        int correctAnswerCount = Global.getCorrectAnswerCount();
+        Intent thisIntent = getIntent();
+        final int correctAnswerCount = thisIntent.getIntExtra(MainActivity.CORRECT_ANSWER_COUNT,0);
         mResult.setText("Result: " + Integer.toString(correctAnswerCount) + " / " + Integer.toString(Global.QUESTION_POOL_AMMOUT));
 
         mDone.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Global.resetAll();
                 Intent intent = new Intent(ResultActivity.this,MainActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 ResultActivity.this.startActivity(intent);

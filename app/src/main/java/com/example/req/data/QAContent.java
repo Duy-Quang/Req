@@ -1,8 +1,8 @@
-package com.example.req;
+package com.example.req.data;
 
 import java.util.Random;
 
-public class QuestionDataBase {
+public class QAContent {
     private String question;
     private String[] answers = new String[4];
     private int correct_answer;
@@ -31,7 +31,7 @@ public class QuestionDataBase {
         this.correct_answer = correct_answer;
     }
 
-    public QuestionDataBase(){}
+    public QAContent(){}
 
 
 
