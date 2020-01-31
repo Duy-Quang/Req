@@ -57,5 +57,6 @@ public class ConfirmDialog extends DialogFragment implements View.OnClickListene
     @Override
     public void onClick(View v) {
         mClickHandler.onConfirmClick();
+        dismiss();
     }
 }

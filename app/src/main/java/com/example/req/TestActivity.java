@@ -1,43 +1,48 @@
 package com.example.req;
 
+import android.app.LoaderManager;
 import android.content.ContentUris;
-import android.content.DialogInterface;
+import android.content.CursorLoader;
 import android.content.Intent;
+import android.content.Loader;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 
 import com.example.req.data.QAContent;
 import com.example.req.data.QAContract;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
 
-import androidx.appcompat.app.AlertDialog;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.FragmentManager;
+
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.View;
 import android.widget.Button;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.req.data.QAContract.QAEntry;
-public class TestActivity extends AppCompatActivity implements ConfirmDialog.ConfirmDialogOnClickListener {
-    private TextView mQuestionNumber;
-    private TextView mQuestionContent;
-    private RecyclerView mRecyclerViewAnswer;
-    private AnswerAdapter mAnswerAdapter;
-    private Button mOk;
+public class TestActivity extends AppCompatActivity implements ConfirmDialog.ConfirmDialogOnClickListener,LoaderManager.LoaderCallbacks<Cursor> {
+
+    public static final String QUESTION_NUMBER = "QUESTION_NUMBER";
+    public static final String QUESTION_CONTENT = "QUESTION_CONTENT";
+    public static final String ANSWERS = "ANSWERS";
+    public static final String CORRECT_ANSWER = "CORRECT_ANSWER";
+
+    private static final String QA_INDEX = "QA_INDEX";
+    private static final int QA_LOADER_ID = 30;
 
     private int questionIndex ;
-    private int[] abstractQuestionPool;
     private int correctAnswerCount;
     private QAContent qaContent;
-    private int selectedAnswer;
+
+    private Cursor dataCursor;
+
+    private FragmentManager fragmentManager;
 
 
     @Override
@@ -45,96 +50,55 @@ public class TestActivity extends AppCompatActivity implements ConfirmDialog.Con
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_test);
 
-        mQuestionNumber = (TextView) findViewById(R.id.tv_question_number);
-        mQuestionContent = (TextView) findViewById(R.id.tv_question_content);
-        mRecyclerViewAnswer = (RecyclerView) findViewById(R.id.recyclerview_answer);
-        mOk = (Button) findViewById(R.id.b_ok);
-
         //get data from calling intent
         Intent thisIntent = getIntent();
         questionIndex = thisIntent.getIntExtra(MainActivity.QUESTION_INDEX,0);
-        abstractQuestionPool = thisIntent.getIntArrayExtra(MainActivity.ABSTRACT_QUESTION_POOL);
         correctAnswerCount = thisIntent.getIntExtra(MainActivity.CORRECT_ANSWER_COUNT,0);
 
-        mQuestionNumber.setText(Integer.toString(questionIndex) + "/" );
+        fragmentManager = getSupportFragmentManager();
 
-        //get random question from database
-        int randomQuestionFromDatabase = abstractQuestionPool[questionIndex-1];
-        qaContent = getData(randomQuestionFromDatabase);
+        qaContent = new QAContent();
 
-        //set question
-        mQuestionContent.setText(qaContent.getQuestion());
+        //begin to load from database
+        Bundle args = new Bundle();
+        args.putInt(QA_INDEX,questionIndex);
+        getLoaderManager().initLoader(this.QA_LOADER_ID,args,  this);
+    }
 
-        //set Answer layout
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this,RecyclerView.VERTICAL,false);
-        mRecyclerViewAnswer.setLayoutManager(layoutManager);
-        mRecyclerViewAnswer.setHasFixedSize(true);
 
-        mAnswerAdapter = new AnswerAdapter();
-        mAnswerAdapter.setAnswerData(qaContent.getAnswers());
-        boolean [] tickMarkList = {false,false,false,false};
-        mAnswerAdapter.setTickMarkList(tickMarkList);
 
-        mRecyclerViewAnswer.setAdapter(mAnswerAdapter);
+    private QAContent getDataFromCursor(int position) {
+        QAContent qaContent = new QAContent();
 
-        mOk.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        String questionData;
+        String[] answerData = new String[4];
+        final int correctAnswerData;
 
-                selectedAnswer = mAnswerAdapter.getSelectedAnswer() + 1;
-                if(selectedAnswer>0){
+        dataCursor.moveToPosition(position);
+        questionData = dataCursor.getString(dataCursor.getColumnIndex(QAEntry.COLUMN_QUESTION));
+        answerData[0]= dataCursor.getString(dataCursor.getColumnIndex(QAEntry.COLUMN_ANSWER_1));
+        answerData[1]= dataCursor.getString(dataCursor.getColumnIndex(QAEntry.COLUMN_ANSWER_2));
+        answerData[2]= dataCursor.getString(dataCursor.getColumnIndex(QAEntry.COLUMN_ANSWER_3));
+        answerData[3]= dataCursor.getString(dataCursor.getColumnIndex(QAEntry.COLUMN_ANSWER_4));
+        correctAnswerData = dataCursor.getInt(dataCursor.getColumnIndex(QAEntry.COLUMN_CORRECT_ANSWER));
 
-                    //check answer
-                    String dialogMessage;
-                    if(selectedAnswer == qaContent.getCorrect_answer()) {
-                        dialogMessage = "OK";
-                    }else{
-                        dialogMessage= "NG";
-                    }
 
-                    FragmentManager fm = getSupportFragmentManager();
-                    ConfirmDialog confirmDialog = ConfirmDialog.newInstance(dialogMessage,TestActivity.this);
-                    confirmDialog.show(fm,null);
+        qaContent.setQuestion(questionData);
+        qaContent.setAnswers(answerData);
+        qaContent.setCorrect_answer(correctAnswerData);
 
-                }
-                else{
-                    Toast.makeText(TestActivity.this,"No answer selected",Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
+        return qaContent;
+
     }
 
     @Override
-    public void onConfirmClick() {
-        if(questionIndex <Global.QUESTION_POOL_AMMOUT){
-            Intent intent = new Intent(TestActivity.this,TestActivity.class);
-
-            intent.putExtra(MainActivity.QUESTION_INDEX,questionIndex+1);
-            intent.putExtra(MainActivity.ABSTRACT_QUESTION_POOL,abstractQuestionPool);
-            if(selectedAnswer == qaContent.getCorrect_answer()) {
-                intent.putExtra(MainActivity.CORRECT_ANSWER_COUNT,correctAnswerCount + 1);
-            }else{
-                intent.putExtra(MainActivity.CORRECT_ANSWER_COUNT,correctAnswerCount);
-            }
-
-            TestActivity.this.startActivity(intent);
-        }
-        else {
-            Intent intent = new Intent(TestActivity.this,ResultActivity.class);
-
-            if(selectedAnswer == qaContent.getCorrect_answer()) {
-                intent.putExtra(MainActivity.CORRECT_ANSWER_COUNT,correctAnswerCount + 1);
-            }else{
-                intent.putExtra(MainActivity.CORRECT_ANSWER_COUNT,correctAnswerCount);
-            }
-
-            TestActivity.this.startActivity(intent);
-        }
+    public void onBackPressed() {
+        return;
     }
 
-    private QAContent getData(int index) {
-        QAContent qaContent = new QAContent();
-
+    @NonNull
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, @Nullable Bundle args) {
         String[] projecttion = {
                 QAEntry._ID,
                 QAEntry.COLUMN_QUESTION,
@@ -145,38 +109,79 @@ public class TestActivity extends AppCompatActivity implements ConfirmDialog.Con
                 QAEntry.COLUMN_CORRECT_ANSWER
         };
 
-        Cursor cursor = getContentResolver().query(
-                ContentUris.withAppendedId(QAContract.CONTENT_URI,index),
+        int index = args.getInt(QA_INDEX);
+
+        return new CursorLoader(this,
+                Uri.withAppendedPath(QAContract.CONTENT_URI,"random"),
                 projecttion,
                 null,
                 null,
                 null);
-        String questionData;
-        String[] answerData = new String[4];
-        final int correctAnswerData;
-        try {
-            cursor.moveToNext();
-            questionData = cursor.getString(cursor.getColumnIndex(QAEntry.COLUMN_QUESTION));
-            answerData[0]= cursor.getString(cursor.getColumnIndex(QAEntry.COLUMN_ANSWER_1));
-            answerData[1]= cursor.getString(cursor.getColumnIndex(QAEntry.COLUMN_ANSWER_2));
-            answerData[2]= cursor.getString(cursor.getColumnIndex(QAEntry.COLUMN_ANSWER_3));
-            answerData[3]= cursor.getString(cursor.getColumnIndex(QAEntry.COLUMN_ANSWER_4));
-            correctAnswerData = cursor.getInt(cursor.getColumnIndex(QAEntry.COLUMN_CORRECT_ANSWER));
+    }
 
-        } finally {
-            cursor.close();
-        }
-        qaContent.setQuestion(questionData);
-        qaContent.setAnswers(answerData);
-        qaContent.setCorrect_answer(correctAnswerData);
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        dataCursor = data;
+        //get first QA content
+        qaContent = getDataFromCursor(questionIndex - 1);
 
-        return qaContent;
+        //begin first fragment
+        Bundle fragmentData = new Bundle();
+        fragmentData.putString(QUESTION_CONTENT,qaContent.getQuestion());
+        fragmentData.putStringArray(ANSWERS,qaContent.getAnswers());
+        fragmentData.putInt(CORRECT_ANSWER,qaContent.getCorrect_answer());
+        fragmentData.putInt(QUESTION_NUMBER,questionIndex);
+
+        TestFragment testFragment = TestFragment.newInstance(fragmentData);
+        fragmentManager.beginTransaction()
+                .setCustomAnimations(R.animator.enter_from_left,0)
+                .add(R.id.fragment_test_container,testFragment)
+                .commit();
+
+    }
+
+    @Override
+    public void onLoaderReset(@NonNull Loader<Cursor> loader) {
+        //
+    }
+
+    public void increaseCorrectAnswerCount(){
+        correctAnswerCount++;
     }
 
 
-
     @Override
-    public void onBackPressed() {
-        return;
+    public void onConfirmClick() {
+        int questionPoolAmount = getResources().getInteger(R.integer.QUESTION_POOL_AMMOUT);
+        if(questionIndex <questionPoolAmount){
+            //increase question index
+            questionIndex++;
+
+            //get next QA content
+            qaContent = getDataFromCursor(questionIndex-1);
+
+            //start new fragment to replace previous one
+            Bundle fragmentData = new Bundle();
+            fragmentData.putString(QUESTION_CONTENT,qaContent.getQuestion());
+            fragmentData.putStringArray(ANSWERS,qaContent.getAnswers());
+            fragmentData.putInt(CORRECT_ANSWER,qaContent.getCorrect_answer());
+            fragmentData.putInt(QUESTION_NUMBER,questionIndex);
+
+            TestFragment testFragment = TestFragment.newInstance(fragmentData);
+            fragmentManager.beginTransaction()
+                    .setCustomAnimations(R.animator.enter_from_left,0)
+                    .replace(R.id.fragment_test_container,testFragment)
+                    .commit();
+        }
+        else { //finished all question
+            dataCursor.close();
+
+            //move to result activity
+            Intent intent = new Intent(TestActivity.this,ResultActivity.class);
+            intent.putExtra(MainActivity.CORRECT_ANSWER_COUNT,correctAnswerCount);
+
+
+            TestActivity.this.startActivity(intent);
+        }
     }
 }

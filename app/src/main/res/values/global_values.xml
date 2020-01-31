@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="QUESTION_DB_AMOUNT">30</integer>
+    <integer name="QUESTION_POOL_AMMOUT">10</integer>
+
+</resources>

@@ -23,7 +23,9 @@ public class ResultActivity extends AppCompatActivity {
 
         Intent thisIntent = getIntent();
         final int correctAnswerCount = thisIntent.getIntExtra(MainActivity.CORRECT_ANSWER_COUNT,0);
-        mResult.setText("Result: " + Integer.toString(correctAnswerCount) + " / " + Integer.toString(Global.QUESTION_POOL_AMMOUT));
+
+        int questionPoolAmount = getResources().getInteger(R.integer.QUESTION_POOL_AMMOUT);
+        mResult.setText("Result: " + Integer.toString(correctAnswerCount) + " / " + Integer.toString(questionPoolAmount));
 
         mDone.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -33,5 +35,10 @@ public class ResultActivity extends AppCompatActivity {
                 ResultActivity.this.startActivity(intent);
             }
         });
+    }
+
+    @Override
+    public void onBackPressed() {
+        return;
     }
 }

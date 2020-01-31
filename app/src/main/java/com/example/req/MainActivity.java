@@ -21,7 +21,6 @@ import java.util.Random;
 import com.example.req.data.QAContract.QAEntry;
 
 public class MainActivity extends AppCompatActivity {
-    public static final String ABSTRACT_QUESTION_POOL= "ABSTRACT_QUESTION_POOL";
     public static final String QUESTION_INDEX = "QUESTION_INDEX";
     public static final String CORRECT_ANSWER_COUNT = "CORRECT_ANSWER_COUNT";
     private Button mStartButton;
@@ -37,9 +36,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this,TestActivity.class);
-                //get random 10 question of DB
-                int[] abstractQuestionPool = getRandomContentOfDB(Global.QUESTION_POOL_AMMOUT,Global.QUESTION_DB_AMOUNT);
-                intent.putExtra(ABSTRACT_QUESTION_POOL,abstractQuestionPool);
 
                 //starting index at 1
                 int questionIndex = 1;
@@ -52,10 +48,6 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-
-        //for debug
-        mDbHelper = new QADbHelper(this);
-        int debug = 0;
     }
 
     @Override
@@ -63,8 +55,9 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
         File dbFile = getDatabasePath(QAEntry.DATABASE_NAME);
         if(!dbFile.exists()){
+            int questionDbAmout = getResources().getInteger(R.integer.QUESTION_DB_AMOUNT);
             //generate random 30 question DB
-            for(int i = 0; i < Global.QUESTION_DB_AMOUNT ; i++) {
+            for(int i = 0; i < questionDbAmout ; i++) {
                 insertRandomContent(i+1);
             }
         }

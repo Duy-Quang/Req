@@ -13,6 +13,8 @@ import android.os.CancellationSignal;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.example.req.MainActivity;
+import com.example.req.R;
 import com.example.req.data.QAContract.QAEntry;
 
 public class QAProvider extends ContentProvider {
@@ -22,12 +24,14 @@ public class QAProvider extends ContentProvider {
 
     private static final int QA = 100;
     private static final int QA_ID = 101;
+    private static final int QA_RANDOM = 999;
 
     private static final UriMatcher sUriMatcher = new UriMatcher((UriMatcher.NO_MATCH));
 
     static {
         sUriMatcher.addURI(QAContract.CONTENT_AUTHORITY,QAContract.PATH_QA,QA);
         sUriMatcher.addURI(QAContract.CONTENT_AUTHORITY,QAContract.PATH_QA + "/#",QA_ID);
+        sUriMatcher.addURI(QAContract.CONTENT_AUTHORITY,QAContract.PATH_QA + "/random",QA_RANDOM);
     }
 
     @Override
@@ -53,6 +57,10 @@ public class QAProvider extends ContentProvider {
                 selection = QAEntry._ID + "=?";
                 selectionArgs = new String[] {String.valueOf(ContentUris.parseId(uri))};
                 cursor = database.query(QAEntry.TABLE_NAME,projection,selection,selectionArgs,null,null,sortOrder);
+                break;
+            case QA_RANDOM:
+                int questionPoolAmount = getContext().getResources().getInteger(R.integer.QUESTION_POOL_AMMOUT);
+                cursor = database.rawQuery("SELECT * FROM " + QAEntry.TABLE_NAME + " ORDER BY RANDOM() LIMIT " + questionPoolAmount, null);
                 break;
             default:
                 throw new IllegalArgumentException("unknown URI " + uri);
