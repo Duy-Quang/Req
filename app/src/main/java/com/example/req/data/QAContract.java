@@ -4,6 +4,7 @@ import android.content.ContentResolver;
 import android.net.Uri;
 import android.provider.BaseColumns;
 
+
 public final class QAContract {
 
     public static final String CONTENT_AUTHORITY = "com.example.req";
@@ -20,7 +21,7 @@ public final class QAContract {
 
     public static final class QAEntry implements BaseColumns{
         public static final String DATABASE_NAME = "shelter.db";
-        public static final String TABLE_NAME = "QA";
+        public static final String TABLE_NAME = "QAContent";
         public static final String _ID = BaseColumns._ID;
         public static final String COLUMN_QUESTION = "question";
         public static final String COLUMN_ANSWER_1 = "answer_1";

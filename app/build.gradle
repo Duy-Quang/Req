@@ -20,6 +20,9 @@ android {
 }
 
 dependencies {
+    def room_version = "2.2.3"
+    implementation "androidx.room:room-runtime:$room_version"
+
     implementation 'com.android.support:recyclerview-v7:29.0.0'
 
     implementation fileTree(dir: 'libs', include: ['*.jar'])

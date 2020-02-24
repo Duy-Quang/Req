@@ -30,5 +30,4 @@ public class QADbHelper extends SQLiteOpenHelper {
 
     }
 
-
 }
